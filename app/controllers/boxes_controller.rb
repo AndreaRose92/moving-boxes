@@ -1,9 +1,7 @@
 class BoxesController < ApplicationController
 
-    
-
     def index
-        render json: Box.all
+        render json: current_boxes
     end
 
     def show
@@ -12,6 +10,8 @@ class BoxesController < ApplicationController
 
     def create
         box = Box.create!(box_params)
+        box.update(number: Box.where(user_id: box.user_id, room: box.room).size)
+        render json: box, status: :created
     end
 
     def update
@@ -25,17 +25,21 @@ class BoxesController < ApplicationController
     end
 
     def rooms
-        render json: Box.pluck(:room).uniq
+        render json: Box.where(user_id: current_user.id).pluck(:room).uniq
     end
 
     private
 
     def find_box
-        Box.find_by(room: params[:room], number: params[:number])
+        Box.find(params[:id])
+    end
+
+    def current_boxes
+        Box.where(user_id: current_user.id)
     end
 
     def box_params
-        params.permit(:room, :number, :contents)
+        params.permit(:room, :contents, :user_id)
     end
 
 end
